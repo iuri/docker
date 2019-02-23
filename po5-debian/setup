@@ -1,0 +1,56 @@
+#!/bin/sh -e
+# setup script for po5-debian
+# See the README file for details
+# Copyright (c) 2019 Iuri Sampaio <iuri@iurix.com>
+# This code is provided under the GNU GPL licenses.
+
+set -e
+# comment out to debug
+#set -x
+
+# the subdirectory containing the data to build the docker image
+CONTEXT=src
+
+# download the file at the specified URL
+download()
+{
+	local url name
+	url="$1"
+	name=${url##*/}
+	if [ -f "$name" ] ; then
+		echo "setup: $CONTEXT/$name already downloaded"
+	else
+		echo "setup: downloading $CONTEXT/$name from $url"
+		if ! wget -nv "$url" ; then
+			rm -f "$name"
+			echo >&2 "ERROR: wget failed to download $url"
+			echo >&2 "ERROR: See setup.log for diagnostics"
+		fi
+	fi
+}
+
+# be sure we are in the right directory
+cd $( dirname $0 )
+if ! [ -d "$CONTEXT" ] ; then
+	exec >&2
+	echo "ERROR: $CONTEXT subdirectory not found at $(pwd)"
+	echo "Program terminated."
+	exit 1
+fi
+
+(
+	echo "setup: started at $(date -R)"
+
+	# download the required files to the CONTEXT directory
+	cd "$CONTEXT"
+	download http://sourceforge.net/projects/project-open/files/project-open/Support%20Files/naviserver-4.99.8.tgz
+	download http://sourceforge.net/projects/project-open/files/project-open/Support%20Files/web_projop-aux-files.5.0.0.0.0.tgz
+	download http://sourceforge.net/projects/project-open/files/project-open/V5.0/update/project-open-Update-5.0.2.4.0.tgz
+
+	echo "setup: ended at $(date -R)"
+
+# log everything done here to setup.log
+) 2>&1 | tee -a setup.log
+
+exit 0
+

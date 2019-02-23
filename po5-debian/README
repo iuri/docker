@@ -1,0 +1,206 @@
+-----------------------
+po5-centos7 --- alpha-0
+-----------------------
+
+A docker image for project-open v5.0
+Based on the "official" centos7 image for docker.
+
+DISCLAIMER
+----------
+
+This is alpha code. It is provided 'as is' in the hope that it may be
+useful for somebody, but there is no warranty of any kind.
+
+The following instructions will show you how to build and run a
+docker image containing a running instance of ]project-open[.
+
+The capabilities of this image with respect to scalability,
+concurrency and so on are currently under development.
+
+DO NOT USE THIS WORK AT THIS STAGE IN PRODUCTION ENVIRONMENTS
+
+REQUIREMENTS
+------------
+
+You must have installed and properly running a docker environment in the
+host where you want to build the po5-centos7 docker image.
+
+Please, follow the instructions at https://www.docker.com/ to know how
+to install and setup a docker development environment.
+
+You will also need to have installed the following software:
+
+	- coreutils
+	- wget
+
+The following instructions assume that you have configured docker to
+be used as a normal user, so there is no need to become 'root' in
+order to run docker commands. If this is not your case, either run
+everything as root or use 'sudo' to run the privileged commands.
+
+INSTALL
+-------
+
+Download the po5-centos7.tar.gz archive from the project-open web site
+and extract its contents to the directory of your choice.
+
+You will get a subdirectory called po5-centos7 with everything you need
+to create the docker image. Enter into it. You must get something like
+that:
+
+$ cd po5-centos7
+$ ls -lR
+.:
+total 16
+-rwxrwxr-x. 1 salo salo   780 ago 18 19:11 build
+drwxrwxr-x. 2 salo salo     6 ago 18 18:57 data
+-rw-rw-r--. 1 salo salo  1333 ago 18 17:50 README
+-rwxrwxr-x. 1 salo salo  1222 ago 18 19:11 run
+-rwxrwxr-x. 1 salo salo  1505 ago 18 19:11 setup
+drwxrwxr-x. 2 salo salo   112 ago 18 19:29 src
+
+./data:
+total 0
+
+./src:
+total 28
+-rw-rw-r--. 1 salo salo  271 jul 31 14:41 crontab
+-rw-rw-r--. 1 salo salo 1319 ago 18 19:29 Dockerfile
+-rw-rw-r--. 1 salo salo 1983 jul 31 14:24 export-dbs
+-rwxrwxr-x. 1 salo salo 1190 ago 18 19:29 init.sh
+-rwxrwxr-x. 1 salo salo 7330 ago 18 19:29 install.sh
+-rw-rw-r--. 1 salo salo  535 jul 31 14:06 projop.service
+
+SETUP
+-----
+
+The po5-centos7 image is built from the data stored at the src subdirectory.
+
+This subdirectory must contain everything provided by the po5-centos7.tar.gz
+archive, plus three files containing the actual project-open distribution,
+that must be downloaded to the src subdirectory before building the image.
+
+Run the setup script to download these files to the src subdirectory:
+
+$ ./setup
+
+BUILD
+-----
+
+After running the setup script you can run the build script to build
+the docker image:
+
+$ ./build
+
+The image is named 'local/po5-centos7'. You can see it with the
+docker command:
+
+$ docker image ls
+REPOSITORY                 TAG                 IMAGE ID            CREATED              SIZE
+local/po5-centos7          latest              053b7e292cb3        About a minute ago   1.65GB
+...
+
+If you want to remove the image later (for example, prior to building
+a clean new one) use the following command:
+
+$ docker image rm local/po5-centos7
+
+RUN
+---
+
+Once the image has been built you can run it using the run script:
+
+$ ./run
+
+The parameters used to run the image can be found inside the run script.
+The container is named 'po5_centos7', the persistent data is stored in
+the 'data' subdirectory, project-open listens on port 8182 and the postgresql
+server listents on port 8384.
+
+You can see it with the following docker command:
+
+$ docker container ls
+CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS              PORTS                                            NAMES
+8342a1c7f9cb        local/po5-centos7   "/usr/src/projop/ini…"   About a minute ago   Up About a minute   0.0.0.0:8384->5432/tcp, 0.0.0.0:8182->8000/tcp   po5_centos7
+
+Now point your favorite browser to http://localhost:8182/ and you should
+get the project-open login page. Enter with the Email 'sysadmin@tigerpond.com'
+and the Password 'system'.
+
+In the data subdirectory you will see the persistent data the container
+is managing. You can modify it directly from the host if you need it
+(for example, to modify the configuration files).
+
+If you want to enter into the container use the following command
+(type 'exit' when you are done):
+
+$ docker exec -it po5_centos7 /bin/bash
+
+Here is a brief session and what you should get:
+
+$ docker exec -it po5_centos7 /bin/bash
+[root@8342a1c7f9cb projop]# id
+uid=0(root) gid=0(root) groups=0(root)
+[root@8342a1c7f9cb projop]# pwd
+/usr/src/projop
+[root@8342a1c7f9cb projop]# ls -Al
+total 61576
+-rw-rw-r--. 1 root root     1319 Aug 18 17:29 Dockerfile
+-rw-rw-r--. 1 root root      271 Jul 31 12:41 crontab
+-rw-rw-r--. 1 root root     1983 Jul 31 12:24 export-dbs
+-rwxrwxr-x. 1 root root     1190 Aug 18 17:29 init.sh
+-rwxrwxr-x. 1 root root     7330 Aug 18 17:29 install.sh
+-rw-rw-r--. 1 root root  6058971 Nov 28  2015 naviserver-4.99.8.tgz
+-rw-rw-r--. 1 root root 56907469 Aug 17 23:06 project-open-Update-5.0.2.4.0.tgz
+-rw-rw-r--. 1 root root      535 Jul 31 12:06 projop.service
+-rw-rw-r--. 1 root root    52711 Apr  6  2016 web_projop-aux-files.5.0.0.0.0.tgz
+[root@8342a1c7f9cb projop]# ps auxw
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.0  42928  2856 ?        Ss   19:50   0:00 /usr/sbin/init
+root        22  0.0  0.0  39080  4368 ?        Ss   19:50   0:00 /usr/lib/systemd/systemd-journald
+root        24  0.0  0.0  26096  1572 ?        Ss   19:50   0:00 /usr/sbin/crond -n
+postgres    32  0.0  0.0 134844  9548 ?        S    19:50   0:00 /usr/bin/postgres -D /var/lib/pgsql/data -p 5432
+postgres    33  0.0  0.0  92468  1504 ?        Ss   19:50   0:00 postgres: logger process   
+postgres    40  0.0  0.0 134844  1736 ?        Ss   19:50   0:00 postgres: checkpointer process   
+postgres    41  0.0  0.0 134844  2512 ?        Ss   19:50   0:00 postgres: writer process   
+postgres    42  0.0  0.0 134844  2792 ?        Ss   19:50   0:00 postgres: wal writer process   
+postgres    43  0.0  0.0 135700  3028 ?        Ss   19:50   0:00 postgres: autovacuum launcher process   
+postgres    44  0.0  0.0  94720  1796 ?        Ss   19:50   0:00 postgres: stats collector process   
+projop      48 18.9  1.8 929520 295136 ?       Ssl  19:50   0:33 /usr/local/ns/bin/nsd -t /web/projop/etc/config.tcl -u projop -g projop
+postgres    55  0.7  0.2 142808 33560 ?        Ss   19:50   0:01 postgres: projop projop [local] idle
+postgres    56  0.0  0.0 139084 11796 ?        Ss   19:50   0:00 postgres: projop projop [local] idle
+postgres    57  0.0  0.0 136076  3824 ?        Ss   19:50   0:00 postgres: projop projop [local] idle
+projop      58  0.0  0.0  44328  2872 ?        Sl   19:51   0:00 /usr/local/ns/bin/nsproxy ExecPool ExecPool-7
+postgres    69 11.1  0.1 148720 28332 ?        Ss   19:51   0:18 postgres: projop projop [local] idle
+root        77  0.1  0.0  11820  1876 pts/0    Ss   19:53   0:00 /bin/bash
+root        94  0.0  0.0  51708  1720 pts/0    R+   19:53   0:00 ps auxw
+[root@8342a1c7f9cb projop]# exit
+exit
+
+To stop the container run:
+
+$ docker stop po5_centos7
+
+To start it again:
+
+$ docker start po5_centos7
+
+And to remove it:
+
+$ docker stop po5_centos7
+$ docker rm po5_centos7
+
+TODO
+----
+
+- Currently, no email support is installed into the docker image.
+
+- Scalability and concurrency have not yet been tested, but for sure
+  they will require changes in the way the image is built, probably
+  by splitting the current monolithic installation into several services.
+
+- Please follow us at the ]project-open[ web site. As new work becomes ready
+  we will publish it there.
+
+Gonzalo Pérez de Olaguer Córdoba <gonzalo.perez@project-open.com>
+

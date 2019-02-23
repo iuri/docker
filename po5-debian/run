@@ -1,0 +1,51 @@
+#!/bin/sh -e
+# run script for po5-debian9
+# See the README file for details
+# Copyright (c) 2019 Iuri Sampaio <iuri@iurix.com>
+# This code is provided under the GNU GPL licenses.
+
+set -e
+# comment out to debug
+#set -x
+
+# the subdirectory containing the data to build the docker image
+CONTEXT=src
+# the name of the docker image
+TAG="local/po5-debian"
+# the subdirectory containing the persistent data of the container
+DATA=data
+# the name of the container
+NAME=po5_debian9
+# the port the project-open web server listens to
+PO_PORT=8182
+# the port the postgresql server listens to
+PSQL_PORT=8384
+
+# be sure we are in the right directory
+cd $( dirname $0 )
+if ! [ -d "$CONTEXT" ] ; then
+	exec >&2
+	echo "ERROR: $CONTEXT subdirectory not found at $(pwd)"
+	echo "Program terminated."
+	exit 1
+fi
+
+# DATA must have be an absolute path
+DATA=$( cd $DATA && pwd )
+
+(
+	echo "run: started at $(date -R)"
+
+	docker run --name "$NAME" -d \
+	       --tmpfs /run -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+	       -p "$PO_PORT:8000" -p "$PSQL_PORT:5432" \
+	       -v "$DATA:/var/lib/docker-projop/runtime" \
+	       "$TAG"
+	
+	echo "run: ended at $(date -R)"
+
+# log everything done here to run.log
+) 2>&1 | tee -a run.log
+
+exit 0
+

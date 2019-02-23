@@ -1,0 +1,25 @@
+# ]project-open[ service startup file
+
+[Unit]
+Description=NaviServer Web Server as user projop
+After=postgresql.service network.target
+Wants=postgresql.service
+
+[Service]
+Type=forking
+PIDFile=/web/projop/log/nsd.pid
+
+ExecStartPre=/usr/bin/rm -f /web/projop/log/nsd.pid
+ExecStart=/usr/local/ns/bin/nsd -t /web/projop/etc/config.tcl -u projop -g projop
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s 9 $MAINPID
+
+Restart=always
+# Restart=on-abort
+# Restart=on-abnormal
+
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+

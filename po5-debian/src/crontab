@@ -1,0 +1,6 @@
+# automatic backups for ]project-open[
+
+29 3 * * * /usr/bin/perl /root/bin/export-dbs > /var/log/postgres/export-dbs.log 2>&1
+24 3 * * * /usr/bin/find /var/backup -name '*.tgz' -mtime +6 | xargs rm
+25 3 * * * /usr/bin/find /var/backup -name '*.bz2' -mtime +6 | xargs rm
+
